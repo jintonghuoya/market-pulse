@@ -1,63 +1,98 @@
-"""Market fundamentals analysis — vacancy, rent, absorption, supply/demand."""
+"""Market fundamentals analysis — occupancy, ADR, RevPAR, demand/supply."""
 
 import pandas as pd
 
 
-def vacancy_trend(df, date_col="period", value_col="vacancy_rate"):
-    """Vacancy rate trend over time."""
-    ts = _to_ts(df, date_col, value_col)
-    return {
-        "current": ts.iloc[-1].item() if len(ts) > 0 else None,
-        "yoy_change": ts.pct_change(periods=12).iloc[-1].item() if len(ts) > 12 else None,
-        "series": ts,
-    }
-
-
-def rent_trend(df, date_col="period", value_col="avg_rent"):
-    """Average rent trend and growth rate."""
-    ts = _to_ts(df, date_col, value_col)
-    return {
-        "current": ts.iloc[-1].item() if len(ts) > 0 else None,
-        "yoy_growth": ts.pct_change(periods=12).iloc[-1].item() if len(ts) > 12 else None,
-        "series": ts,
-    }
-
-
-def net_absorption(df, date_col="period", value_col="net_absorption"):
-    """Net absorption summary."""
-    ts = _to_ts(df, date_col, value_col)
-    return {
-        "latest": ts.iloc[-1].item() if len(ts) > 0 else None,
-        "trailing_4q_sum": ts.tail(4).sum().item() if len(ts) >= 4 else ts.sum().item(),
-        "series": ts,
-    }
-
-
-def supply_demand_ratio(df, supply_col="new_supply", demand_col="net_absorption", date_col="period"):
-    """Supply vs demand ratio. >1 means oversupply."""
-    if supply_col not in df.columns or demand_col not in df.columns:
+def occupancy_trend(df, date_col="period", value_col="occupancy"):
+    """Occupancy rate trend over time."""
+    if value_col not in df.columns:
         return None
-    supply = _to_ts(df, date_col, supply_col)
-    demand = _to_ts(df, date_col, demand_col)
-    ratio = supply / demand.replace(0, float("nan"))
+    ts = _to_ts(df, date_col, value_col)
     return {
-        "latest_ratio": ratio.iloc[-1].item() if len(ratio) > 0 else None,
-        "series": ratio,
+        "current": _last(ts),
+        "yoy_change": _yoy(ts),
+        "series": ts,
+    }
+
+
+def adr_trend(df, date_col="period", value_col="adr"):
+    """Average Daily Rate trend."""
+    if value_col not in df.columns:
+        return None
+    ts = _to_ts(df, date_col, value_col)
+    return {
+        "current": _last(ts),
+        "yoy_growth": _yoy(ts),
+        "series": ts,
+    }
+
+
+def revpar_trend(df, date_col="period", value_col="revpar"):
+    """RevPAR trend (Revenue Per Available Room)."""
+    if value_col not in df.columns:
+        return None
+    ts = _to_ts(df, date_col, value_col)
+    return {
+        "current": _last(ts),
+        "yoy_growth": _yoy(ts),
+        "series": ts,
+    }
+
+
+def demand_supply(df, date_col="period"):
+    """Demand vs supply analysis."""
+    result = {}
+    if "demand" in df.columns and "supply" in df.columns:
+        demand = _to_ts(df, date_col, "demand")
+        supply = _to_ts(df, date_col, "supply")
+        ratio = demand / supply.replace(0, float("nan"))
+        result["demand_supply_ratio"] = {
+            "current": _last(ratio),
+            "series": ratio,
+        }
+    if "demand" in df.columns:
+        ts = _to_ts(df, date_col, "demand")
+        result["demand"] = {
+            "latest": _last(ts),
+            "yoy_change": _yoy(ts),
+            "series": ts,
+        }
+    if "supply" in df.columns:
+        ts = _to_ts(df, date_col, "supply")
+        result["supply"] = {
+            "latest": _last(ts),
+            "yoy_change": _yoy(ts),
+            "series": ts,
+        }
+    return result if result else None
+
+
+def cap_rate(df, date_col="period", value_col="cap_rate"):
+    """Market cap rate analysis."""
+    if value_col not in df.columns:
+        return None
+    ts = _to_ts(df, date_col, value_col)
+    return {
+        "current": _last(ts),
+        "series": ts,
     }
 
 
 def summary(df, date_col="period"):
-    """One-shot summary of all available fundamentals."""
+    """One-shot summary of all available hospitality fundamentals."""
     result = {}
-    for col_name, func, key in [
-        ("vacancy_rate", vacancy_trend, "vacancy"),
-        ("avg_rent", rent_trend, "rent"),
-        ("net_absorption", net_absorption, "absorption"),
+    for key, func in [
+        ("occupancy", occupancy_trend),
+        ("adr", adr_trend),
+        ("revpar", revpar_trend),
+        ("cap_rate", cap_rate),
     ]:
-        if col_name in df.columns:
-            result[key] = func(df, date_col=date_col)
-    if "new_supply" in df.columns and "net_absorption" in df.columns:
-        result["supply_demand"] = supply_demand_ratio(df, date_col=date_col)
+        r = func(df, date_col=date_col)
+        if r:
+            result[key] = r
+    ds = demand_supply(df, date_col=date_col)
+    if ds:
+        result.update(ds)
     return result
 
 
@@ -66,4 +101,17 @@ def _to_ts(df, date_col, value_col):
     ts = df[[date_col, value_col]].copy()
     ts[date_col] = pd.to_datetime(ts[date_col])
     ts = ts.set_index(date_col).sort_index()
-    return ts
+    return ts[value_col]
+
+
+def _last(series):
+    """Get last non-NaN value."""
+    clean = series.dropna()
+    return clean.iloc[-1].item() if len(clean) > 0 else None
+
+
+def _yoy(series, periods=12):
+    """Year-over-year change."""
+    if len(series.dropna()) <= periods:
+        return None
+    return series.pct_change(periods=periods).dropna().iloc[-1].item()

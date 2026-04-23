@@ -12,8 +12,8 @@ class MarketSeries:
         self.df = self.df.set_index(date_col).sort_index()
         self.value_col = value_col
 
-    def resample(self, freq="M"):
-        """Resample to frequency (M=monthly, Q=quarterly, Y=yearly)."""
+    def resample(self, freq="ME"):
+        """Resample to frequency (ME=monthly, QE=quarterly, YE=yearly)."""
         return self.df.resample(freq).mean()
 
     def yoy(self):
@@ -22,7 +22,7 @@ class MarketSeries:
 
     def qoq(self):
         """Quarter-over-quarter change (resample to Q first)."""
-        quarterly = self.resample("Q")
+        quarterly = self.resample("QE")
         return quarterly.pct_change()
 
     def rolling_avg(self, window=4):

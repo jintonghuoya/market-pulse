@@ -3,14 +3,41 @@
 
 # Standard field mappings per data source
 COSTAR_MARKET_FIELDS = {
-    "vacancy_rate": ["Vacancy Rate", "Vacancy Rate (%)", "vacancy_rate"],
-    "avg_rent": ["Average Rent", "Avg Rent", "Asking Rent", "avg_rent_psf"],
-    "net_absorption": ["Net Absorption", "Net Absorption (SF)", "net_absorption"],
-    "new_supply": ["New Supply", "Completions", "New Supply (SF)"],
-    "inventory": ["Inventory", "Total Inventory", "Total Stock (SF)"],
+    # Identifiers
+    "period": ["Period"],
     "market": ["Market", "MSA", "Metro Area", "City"],
+    "submarket": ["Submarket"],
     "property_type": ["Property Type", "Sector", "Type"],
-    "period": ["Date", "Period", "Quarter", "Year"],
+    "geography_name": ["Geography Name"],
+    # Core hospitality metrics
+    "occupancy": ["Occupancy"],
+    "occupancy_yoy": ["Occupancy Chg (YOY)"],
+    "adr": ["ADR"],
+    "adr_yoy": ["ADR Chg (YOY)"],
+    "revpar": ["RevPAR"],
+    "revpar_yoy": ["RevPAR Chg (YOY)"],
+    "demand": ["Demand"],
+    "demand_yoy": ["Demand Chg (YOY)"],
+    "supply": ["Supply"],
+    "supply_yoy": ["Supply Chg (YOY)"],
+    "revenue": ["Revenue"],
+    "revenue_yoy": ["Revenue Chg (YOY)"],
+    # Investment metrics
+    "cap_rate": ["Market Cap Rate"],
+    "cap_rate_growth": ["Market Cap Rate Growth"],
+    "sale_price_per_room": ["Market Sale Price/Room"],
+    "sale_price_growth": ["Market Sale Price/Room Growth"],
+    "asset_value": ["Asset Value"],
+    # Inventory
+    "existing_buildings": ["Existing Buildings"],
+    "inventory_rooms": ["Inventory Rooms"],
+    "under_construction_rooms": ["Under Construction Rooms"],
+    # 12-month rolling
+    "occupancy_12m": ["12 Mo Occupancy"],
+    "adr_12m": ["12 Mo ADR"],
+    "revpar_12m": ["12 Mo RevPAR"],
+    "demand_12m": ["12 Mo Demand"],
+    "supply_12m": ["12 Mo Supply"],
 }
 
 
